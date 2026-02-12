@@ -93,6 +93,38 @@ def fetch_with_retry(url, params=None, max_retries=3, timeout=45, extra_headers=
                 raise
 
 
+# Country to flag emoji mapping
+COUNTRY_FLAGS = {
+    'canada': '🇨🇦',
+    'usa': '🇺🇸',
+    'sweden': '🇸🇪',
+    'finland': '🇫🇮',
+    'czech-republic': '🇨🇿',
+    'slovakia': '🇸🇰',
+    'switzerland': '🇨🇭',
+    'germany': '🇩🇪',
+    'latvia': '🇱🇻',
+    'denmark': '🇩🇰',
+    'france': '🇫🇷',
+    'italy': '🇮🇹',
+}
+
+COUNTRY_NAMES = {
+    'canada': 'Canada',
+    'usa': 'USA',
+    'sweden': 'Sweden',
+    'finland': 'Finland',
+    'czech-republic': 'Czech Republic',
+    'slovakia': 'Slovakia',
+    'switzerland': 'Switzerland',
+    'germany': 'Germany',
+    'latvia': 'Latvia',
+    'denmark': 'Denmark',
+    'france': 'France',
+    'italy': 'Italy',
+}
+
+
 def fetch_quanthockey_stats(country_code):
     """
     Fetch player stats from Quanthockey for a specific Olympic team.
@@ -101,7 +133,7 @@ def fetch_quanthockey_stats(country_code):
         country_code: Country code (e.g., 'canada', 'usa', 'sweden')
     
     Returns:
-        List of dicts with player stats (name, goals, assists, points)
+        List of dicts with player stats (name, goals, assists, points, country)
     """
     url = f"https://www.quanthockey.com/olympics/en/teams/team-{country_code}-players-2026-olympics-stats.html"
     
@@ -148,7 +180,10 @@ def fetch_quanthockey_stats(country_code):
                             'name': player_name,
                             'goals': goals,
                             'assists': assists,
-                            'points': points
+                            'points': points,
+                            'country': country_code,
+                            'country_flag': COUNTRY_FLAGS.get(country_code, ''),
+                            'country_name': COUNTRY_NAMES.get(country_code, country_code.title()),
                         })
                 except (ValueError, IndexError) as e:
                     continue
@@ -354,7 +389,10 @@ def main():
                 all_player_stats[name_key] = {
                     'name': player['name'],
                     'goals': player['goals'],
-                    'assists': player['assists']
+                    'assists': player['assists'],
+                    'country': player['country'],
+                    'country_flag': player['country_flag'],
+                    'country_name': player['country_name'],
                 }
             else:
                 # Shouldn't happen, but just in case
@@ -389,7 +427,9 @@ def main():
                 'name': stats['name'],
                 'goals': stats['goals'],
                 'assists': stats['assists'],
-                'points': points
+                'points': points,
+                'country_flag': stats.get('country_flag', ''),
+                'country_name': stats.get('country_name', ''),
             })
         else:
             unmatched_players.append({
@@ -661,6 +701,13 @@ def generate_html(sorted_teams, total_players, unmatched_count):
             font-weight: 600;
             color: #1e3c72;
             margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }}
+        
+        .country-flag {{
+            font-size: 1.3em;
         }}
         
         .player-stats {{
@@ -788,9 +835,16 @@ def generate_html(sorted_teams, total_players, unmatched_count):
         sorted_players = sorted(stats['players'], key=lambda p: (p['points'], p['goals']), reverse=True)
         
         for player in sorted_players:
+            flag = player.get('country_flag', '')
+            country_name = player.get('country_name', '')
+            flag_title = f' title="{country_name}"' if country_name else ''
+            
             html_content += f"""
                                     <div class="player-card">
-                                        <div class="player-name">{player['name']}</div>
+                                        <div class="player-name">
+                                            <span class="country-flag"{flag_title}>{flag}</span>
+                                            <span>{player['name']}</span>
+                                        </div>
                                         <div class="player-stats">
                                             <div class="stat">
                                                 <span class="stat-value">{player['goals']}</span>
