@@ -1,0 +1,50 @@
+name: Update Olympic Stats
+
+on:
+  schedule:
+    # Run every 6 hours during the Olympics
+    - cron: '0 */6 * * *'
+  workflow_dispatch:  # Allow manual trigger from Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update-stats:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Fetch latest Olympic stats
+        run: |
+          python olympics_nhl_points.py
+      
+      - name: Copy to index.html
+        run: |
+          cp olympics_nhl_rankings.html index.html
+      
+      - name: Check for changes
+        id: verify_diff
+        run: |
+          git diff --quiet index.html || echo "changed=true" >> $GITHUB_OUTPUT
+      
+      - name: Commit and push if changed
+        if: steps.verify_diff.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add index.html
+          git commit -m "🔄 Auto-update Olympic stats - $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
