@@ -984,7 +984,7 @@ def generate_html(sorted_teams, total_players, unmatched_count):
 """
     
     # Write to file
-    output_file = 'index.html'
+    output_file = 'html/index.html'
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(html_content)
     
