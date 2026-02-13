@@ -3,7 +3,7 @@ name: Update Olympic Stats
 on:
   schedule:
     # Run every 6 hours during the Olympics
-    - cron: '0 */6 * * *'
+    - cron: '*/30 * * * *'
   workflow_dispatch:  # Allow manual trigger from Actions tab
 
 permissions:
